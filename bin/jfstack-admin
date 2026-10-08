@@ -1,0 +1,137 @@
+#!/usr/bin/env bash
+# JFStack Linux Admin Toolkit
+# https://jfstack.es
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [[ -f "$SCRIPT_DIR/../lib/core.sh" ]]; then
+  export JFSTACK_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+elif [[ -d /opt/jfstack-admin/lib ]]; then
+  export JFSTACK_ROOT='/opt/jfstack-admin'
+else
+  printf '[ERROR] Unable to locate JFStack Linux Admin Toolkit files.\n' >&2
+  exit 1
+fi
+source "$JFSTACK_ROOT/lib/core.sh"
+
+help_text() {
+  cat <<EOF_HELP
+JFStack Linux Admin Toolkit v$JFSTACK_VERSION
+
+Usage:
+  jfstack-admin                         Interactive administration menu
+  jfstack-admin CATEGORY ACTION [...]  CLI mode
+  jfstack-admin --version
+  jfstack-admin --help
+
+Categories and current v0.1 actions:
+  user          create | info | expire | password | delete
+  system        info
+  service       status [SERVICE]
+  process       top [cpu|mem]
+  storage       info
+  network       info | ports | test [TARGET]
+  ssh           info | sessions
+  firewall      status
+  docker        status
+  packages      updates
+  logs          errors
+  security      overview
+  cert          check HOST[:PORT]
+  backup        check PATH
+  diagnose      [OUTPUT_FILE]
+  maintenance   overview
+
+Examples:
+  sudo jfstack-admin user create takaka --expires 7d --docker --generate-password
+  sudo jfstack-admin user create tech --expires none --sudo --public-key-file ~/.ssh/id_ed25519.pub
+  sudo jfstack-admin user create vendor --expires 1m --generate-ssh-key
+  jfstack-admin network ports
+  jfstack-admin docker status
+  sudo jfstack-admin diagnose /root/server-report.txt
+EOF_HELP
+}
+
+interactive_menu() {
+  while true; do
+    clear 2>/dev/null || true
+    banner
+    printf ' Version : %s\n Host    : %s\n OS      : %s\n IP      : %s\n SSH     : %s\n' "$JFSTACK_VERSION" "$(hostname)" "$(os_pretty_name)" "$(primary_ip)" "$(ssh_port)"
+    section 'ADMINISTRATION'
+    cat <<'MENU'
+  1) Users & Groups
+  2) System
+  3) Services
+  4) Processes
+  5) Storage
+  6) Network
+  7) SSH
+  8) Firewall
+  9) Docker
+ 10) Packages & Updates
+ 11) Logs
+ 12) Security
+ 13) Certificates
+ 14) Backups
+ 15) Diagnostics
+ 16) Maintenance
+
+  0) Exit
+MENU
+    printf '\n'
+    read -r -p 'Select an option: ' choice
+    case "$choice" in
+      1) "$JFSTACK_ROOT/modules/users/menu.sh";;
+      2) "$JFSTACK_ROOT/modules/system/menu.sh";;
+      3) "$JFSTACK_ROOT/modules/services/menu.sh";;
+      4) "$JFSTACK_ROOT/modules/processes/menu.sh";;
+      5) "$JFSTACK_ROOT/modules/storage/menu.sh";;
+      6) "$JFSTACK_ROOT/modules/network/menu.sh";;
+      7) "$JFSTACK_ROOT/modules/ssh/menu.sh";;
+      8) "$JFSTACK_ROOT/modules/firewall/menu.sh";;
+      9) "$JFSTACK_ROOT/modules/docker/menu.sh";;
+      10) "$JFSTACK_ROOT/modules/packages/menu.sh";;
+      11) "$JFSTACK_ROOT/modules/logs/menu.sh";;
+      12) "$JFSTACK_ROOT/modules/security/menu.sh";;
+      13) "$JFSTACK_ROOT/modules/certificates/menu.sh";;
+      14) "$JFSTACK_ROOT/modules/backups/menu.sh";;
+      15) "$JFSTACK_ROOT/modules/diagnostics/menu.sh";;
+      16) "$JFSTACK_ROOT/modules/maintenance/menu.sh";;
+      0) exit 0;;
+      *) warn 'Invalid option.'; sleep 1;;
+    esac
+  done
+}
+
+[[ $# -gt 0 ]] || { interactive_menu; exit 0; }
+case "$1" in
+  --help|-h|help) help_text ;;
+  --version|-V) printf 'jfstack-admin %s\n' "$JFSTACK_VERSION" ;;
+  user)
+    action="${2:-}"; shift 2 || true
+    case "$action" in
+      create) exec "$JFSTACK_ROOT/modules/users/create-user.sh" "$@";;
+      info) exec "$JFSTACK_ROOT/modules/users/user-info.sh" "$@";;
+      expire) exec "$JFSTACK_ROOT/modules/users/expire-user.sh" "$@";;
+      password) exec "$JFSTACK_ROOT/modules/users/reset-password.sh" "$@";;
+      delete) exec "$JFSTACK_ROOT/modules/users/delete-user.sh" "$@";;
+      *) error 'Unknown user action.'; help_text; exit 2;;
+    esac ;;
+  system) [[ "${2:-}" == info ]] && exec "$JFSTACK_ROOT/modules/system/summary.sh" || { error 'Use: system info'; exit 2; } ;;
+  service) [[ "${2:-}" == status ]] && { shift 2; exec "$JFSTACK_ROOT/modules/services/status.sh" "$@"; } || { error 'Use: service status [SERVICE]'; exit 2; } ;;
+  process) [[ "${2:-}" == top ]] && exec "$JFSTACK_ROOT/modules/processes/top.sh" "${3:-cpu}" || { error 'Use: process top [cpu|mem]'; exit 2; } ;;
+  storage) [[ "${2:-}" == info ]] && exec "$JFSTACK_ROOT/modules/storage/overview.sh" || { error 'Use: storage info'; exit 2; } ;;
+  network)
+    case "${2:-}" in info) exec "$JFSTACK_ROOT/modules/network/overview.sh";; ports) exec "$JFSTACK_ROOT/modules/network/ports.sh";; test) exec "$JFSTACK_ROOT/modules/network/test.sh" "${3:-1.1.1.1}";; *) error 'Use: network info|ports|test'; exit 2;; esac ;;
+  ssh) case "${2:-}" in info) exec "$JFSTACK_ROOT/modules/ssh/overview.sh";; sessions) exec "$JFSTACK_ROOT/modules/ssh/sessions.sh";; *) error 'Use: ssh info|sessions'; exit 2;; esac ;;
+  firewall) [[ "${2:-}" == status ]] && exec "$JFSTACK_ROOT/modules/firewall/overview.sh" || { error 'Use: firewall status'; exit 2; } ;;
+  docker) [[ "${2:-}" == status ]] && exec "$JFSTACK_ROOT/modules/docker/overview.sh" || { error 'Use: docker status'; exit 2; } ;;
+  packages) [[ "${2:-}" == updates ]] && exec "$JFSTACK_ROOT/modules/packages/overview.sh" || { error 'Use: packages updates'; exit 2; } ;;
+  logs) [[ "${2:-}" == errors ]] && exec "$JFSTACK_ROOT/modules/logs/errors.sh" || { error 'Use: logs errors'; exit 2; } ;;
+  security) [[ "${2:-}" == overview ]] && exec "$JFSTACK_ROOT/modules/security/overview.sh" || { error 'Use: security overview'; exit 2; } ;;
+  cert) [[ "${2:-}" == check ]] && exec "$JFSTACK_ROOT/modules/certificates/check.sh" "${3:-}" || { error 'Use: cert check HOST[:PORT]'; exit 2; } ;;
+  backup) [[ "${2:-}" == check ]] && exec "$JFSTACK_ROOT/modules/backups/check-path.sh" "${3:-}" || { error 'Use: backup check PATH'; exit 2; } ;;
+  diagnose) exec "$JFSTACK_ROOT/modules/diagnostics/report.sh" "${2:-}" ;;
+  maintenance) [[ "${2:-}" == overview ]] && exec "$JFSTACK_ROOT/modules/maintenance/overview.sh" || { error 'Use: maintenance overview'; exit 2; } ;;
+  *) error "Unknown category: $1"; help_text; exit 2 ;;
+esac
