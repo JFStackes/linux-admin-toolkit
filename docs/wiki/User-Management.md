@@ -31,4 +31,7 @@ sudo jfstack-admin user create adminops --expires none --sudo --public-key-file 
 
 ```bash
 sudo jfstack-admin user create vendor --expires 1m --generate-ssh-key
+sudo jfstack-admin user create adminops --expires none --sudo --public-key-file /tmp/adminops.pub
 ```
+
+The final summary includes the new account's expiration, groups and SSH connection command. Generated passwords are shown to the operator. By default, generated private keys are stored under `/root/.jfstack-admin/keys/` with restrictive permissions. Transfer the key securely and delete the server-side copy after confirming delivery.

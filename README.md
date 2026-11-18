@@ -1,192 +1,63 @@
 # JFStack Linux Admin Toolkit
 
-**JFStack Linux Admin Toolkit** is a modular Bash toolkit for day-to-day Linux server administration, maintenance, diagnostics and troubleshooting.
+[Guía en español](docs/README.es.md) · [Documentation](docs/README.md) · [Changelog](docs/CHANGELOG.md)
 
-The executable is intentionally short and memorable:
-
-```bash
-jfstack-admin
-```
-
-Project: **JFStack**  
-Website: **https://jfstack.es**  
-GitHub organization: **JFStackes**
-
-## Current release
-
-`v0.1.0` is the first usable release. Mutating operations are deliberately concentrated around user administration; most other modules begin as read-only inspection and diagnostic tools so the toolkit can be tested safely on real servers.
-
-## Features
-
-- Interactive administration menu with 16 categories.
-- CLI mode for scripting and automation.
-- Temporary or permanent local users.
-- Account expiration: 1 day, 7 days, 1 month, 1 year, custom date, or no expiration.
-- Optional sudo/wheel and Docker group membership.
-- Secure generated passwords.
-- Existing SSH public-key installation.
-- Ed25519 key-pair generation and automatic `authorized_keys` configuration.
-- System, service, process, disk, network, SSH, firewall, Docker and package inspection.
-- Log and basic security overview.
-- TLS certificate inspection.
-- Backup-path inspection.
-- Portable diagnostic reports.
-- Tool-owned operational logging without secrets.
+`jfstack-admin` is a Bash toolkit for administering, maintaining and troubleshooting Linux servers. Its initial platform targets are Debian, Ubuntu and RHEL-family distributions. Commands check for the tools they need on the host.
 
 ## Quick start
 
-Run directly from the repository:
+Run the menu from a clone or install the toolkit system-wide.
 
 ```bash
 git clone git@github.com:JFStackes/linux-admin-toolkit.git
 cd linux-admin-toolkit
-sudo ./bin/jfstack-admin
-```
+./bin/jfstack-admin
 
-Or install it:
-
-```bash
 sudo ./install.sh
-sudo jfstack-admin
+jfstack-admin --help
 ```
 
-## Example: temporary user with password
+Installation copies the toolkit to `/opt/jfstack-admin` and links the executable from `/usr/local/bin/jfstack-admin`. See [installation and removal](docs/wiki/Installation.md).
+
+## Analyze and clean a host
+
+Open **16) Analysis & Cleanup** to inspect disk space, inode usage, the largest directories and files, journal usage and maintenance status. The same submenu offers package cache cleanup, update leftovers, policy-based log rotation, archived journal cleanup and expired temporary files.
 
 ```bash
-sudo jfstack-admin user create takaka \
-  --expires 7d \
-  --docker \
-  --generate-password
+jfstack-admin maintenance large-dirs /var 10
+jfstack-admin maintenance large-files /home 20
+jfstack-admin maintenance vacuum-journal 30 --dry-run
+sudo jfstack-admin maintenance clean-cache
 ```
 
-The final output includes the username, generated password, expiration, groups and an SSH connection command. Passwords are displayed to the operator but are never written to the toolkit log.
+Cleanup requires root and an interactive confirmation. `--dry-run` shows the command without running it. `--yes` explicitly authorizes unattended execution. See the [maintenance guide](docs/wiki/Maintenance.md) for the scope of each action.
 
-## Example: permanent SSH-key user
+## Administer users and inspect a server
 
-Use an existing public key:
-
-```bash
-sudo jfstack-admin user create adminops \
-  --expires none \
-  --sudo \
-  --public-key-file /tmp/adminops.pub
-```
-
-Generate a new Ed25519 pair:
+The toolkit supports local user lifecycle management with optional account expiration, sudo and Docker membership, generated passwords and SSH keys. The other menu categories cover services, processes, storage, networking, SSH, firewalls, Docker, updates, logs, security, TLS certificates, backups and diagnostics.
 
 ```bash
-sudo jfstack-admin user create vendor \
-  --expires 1m \
-  --generate-ssh-key
-```
-
-The generated private key is stored below `/root/.jfstack-admin/keys/` with restrictive permissions. Transfer it using a secure channel and remove the server-side copy when it is no longer required.
-
-> **Expiration note:** standard Linux account expiration via `chage`/`useradd` is date-based. In v0.1, `24h` and `1d` resolve to the next calendar date; they are not an exact-to-the-second 24-hour timer.
-
-## CLI examples
-
-```bash
-jfstack-admin system info
+sudo jfstack-admin user create contractor --expires 7d --generate-password
 jfstack-admin service status nginx
-jfstack-admin process top mem
-jfstack-admin storage info
 jfstack-admin network ports
-jfstack-admin ssh info
-jfstack-admin firewall status
-jfstack-admin docker status
-jfstack-admin packages updates
-jfstack-admin logs errors
-jfstack-admin security overview
-jfstack-admin cert check jfstack.es:443
-jfstack-admin backup check /srv/backups
 sudo jfstack-admin diagnose /root/server-report.txt
 ```
 
-## Operational logging
+Root operations are logged in `/var/log/jfstack-admin/jfstack-admin.log`. The toolkit keeps passwords, private-key contents and tokens out of its logs. See [user management](docs/wiki/User-Management.md), the [CLI reference](docs/wiki/CLI-Reference.md) and the [security model](docs/wiki/Security-Model.md).
 
-Tool operations are recorded as JFStack-owned events:
+## Repository layout
 
-```text
-2026-09-30 23:50:02+0200 [INFO] user.create user=takaka expiration=2026-10-07
-2026-09-30 23:50:02+0200 [INFO] group.add user=takaka group=docker
-2026-09-30 23:50:03+0200 [INFO] user.create.completed user=takaka
-```
+| Path | Contents |
+| --- | --- |
+| `bin/` | Menu and CLI dispatcher |
+| `lib/` | Shared Bash helpers |
+| `modules/` | Administration operations by category |
+| `docs/` | Guides, wiki source, changelog and project policies |
+| `scripts/` | Repository maintenance and wiki publishing |
+| `tests/` | Smoke tests |
+| `.github/` | CI workflow |
+| `install.sh`, `uninstall.sh` | System-wide installation and removal |
 
-Root executions use:
+Run `bash tests/smoke.sh` before committing. See the [contribution guide](docs/CONTRIBUTING.md) for ShellCheck instructions and the [security policy](docs/SECURITY.md) for vulnerability reporting.
 
-```text
-/var/log/jfstack-admin/jfstack-admin.log
-```
-
-Passwords, private-key contents and tokens must never be logged.
-
-## Repository structure
-
-```text
-linux-admin-toolkit/
-├── bin/                  # jfstack-admin dispatcher
-├── lib/                  # shared Bash libraries
-├── modules/              # administration modules
-├── docs/                 # command docs, examples and wiki source
-├── scripts/              # project maintenance helpers
-├── tests/                # smoke/static tests
-├── AGENTS.md
-├── CHANGELOG.md
-├── LICENSE
-├── README.md
-└── VERSION
-```
-
-## Wiki
-
-The initial GitHub Wiki source is in [`docs/wiki/`](docs/wiki/). GitHub Wikis are separate Git repositories, so placing a `wiki/` directory in the main repository does **not** populate the Wiki tab automatically.
-
-After enabling the Wiki in GitHub and creating its first page, publish these pages with:
-
-```bash
-./scripts/publish-wiki.sh
-```
-
-The default target is:
-
-```text
-git@github.com:JFStackes/linux-admin-toolkit.wiki.git
-```
-
-## Security model
-
-- No secrets in toolkit logs.
-- Generated private keys are root-readable only.
-- Destructive user deletion requires confirmation unless `--yes` is supplied.
-- Existing configuration files are not branded or modified just to advertise JFStack.
-- Docker group access is optional and should be treated as highly privileged access.
-- Diagnostic reports are created mode `0600` because they can contain operational metadata.
-
-See the Wiki source for the full security model and architecture.
-
-## Compatibility
-
-Initial focus:
-
-- Debian / Ubuntu
-- RHEL-family distributions (Rocky Linux, AlmaLinux, RHEL)
-
-Some read-only modules can work on additional distributions. v0.1 does not claim full cross-distribution coverage yet.
-
-## Development validation
-
-```bash
-bash tests/smoke.sh
-```
-
-If ShellCheck is installed:
-
-```bash
-find . -type f -name '*.sh' -print0 | xargs -0 shellcheck
-shellcheck bin/jfstack-admin
-```
-
-## License
-
-MIT License. See [`LICENSE`](LICENSE).
+Licensed under the [MIT License](LICENSE). [JFStack](https://jfstack.es)

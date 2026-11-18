@@ -19,4 +19,8 @@ When `--generate-ssh-key` is used, the public key is installed into the target a
 
 ## Logs
 
-Root operations are logged to `/var/log/jfstack-admin/jfstack-admin.log`. Only operational metadata is recorded.
+Root operations are logged to `/var/log/jfstack-admin/jfstack-admin.log`. The per-user log path is `~/.local/state/jfstack-admin/jfstack-admin.log`. The toolkit records operational metadata such as `user.create.completed user=takaka` and `maintenance.clean-cache.completed`.
+
+## System cleanup
+
+Cleanup actions require root and explicit confirmation. `--yes` authorizes unattended execution and `--dry-run` shows the system command without executing it. The toolkit logs the action and result. Details from the system utilities are shown to the operator on the terminal. See [[Maintenance]].

@@ -5,11 +5,12 @@ set -euo pipefail
 SRC="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DEST='/opt/jfstack-admin'
 BIN='/usr/local/bin/jfstack-admin'
-mkdir -p "$DEST"
-for item in bin lib modules docs VERSION LICENSE CHANGELOG.md; do
-  rm -rf "$DEST/$item"
+mkdir -p "$DEST" "$(dirname "$BIN")"
+for item in bin lib modules docs README.md VERSION LICENSE; do
+  rm -rf -- "${DEST:?}/$item"
   cp -a "$SRC/$item" "$DEST/$item"
 done
+ln -sfn docs/CHANGELOG.md "$DEST/CHANGELOG.md"
 chmod -R go-w "$DEST"
 find "$DEST/bin" "$DEST/modules" -type f -name '*.sh' -exec chmod 755 {} + 2>/dev/null || true
 chmod 755 "$DEST/bin/jfstack-admin"

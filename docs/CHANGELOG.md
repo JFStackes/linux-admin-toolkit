@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- Expanded main menu option `16` into an **Analysis & Cleanup** submenu with disk and inode usage, largest-directory and largest-file scans, package cache cleanup, log rotation, archived journal cleanup and temporary-file cleanup.
+- Added CLI previews and explicit confirmation for cleanup actions.
+- Consolidated project documentation under `docs/` and added a Spanish quick start.
+
 ## 0.1.0 - 2026-09-30
 
 Initial public version.

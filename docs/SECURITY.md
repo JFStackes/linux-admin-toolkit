@@ -15,3 +15,5 @@ For a security-sensitive report, use a private security reporting mechanism prov
 - Partial failures should be rolled back where doing so is safe and deterministic.
 - Destructive operations require explicit confirmation or a clearly documented non-interactive override.
 - Generated files containing operational metadata should use restrictive permissions by default.
+
+See the [security model](wiki/Security-Model.md) for the toolkit's operating rules.

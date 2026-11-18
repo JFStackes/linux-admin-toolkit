@@ -6,6 +6,7 @@ Welcome to the documentation for **JFStack Linux Admin Toolkit**, a modular Bash
 
 - [[Installation]]
 - [[CLI-Reference]]
+- [[Maintenance]]
 - [[User-Management]]
 - [[Security-Model]]
 - [[Architecture]]

@@ -15,6 +15,12 @@ JFStack Linux Admin Toolkit (`jfstack-admin`)
 ## Compatibility target
 Initial target: Debian/Ubuntu and RHEL-family systems. Other distributions may work but are not guaranteed in v0.1.
 
+## Repository guide
+- [Documentation index](docs/README.md)
+- [Architecture](docs/wiki/Architecture.md)
+- [CLI reference](docs/wiki/CLI-Reference.md)
+- [Changelog](docs/CHANGELOG.md)
+
 ## Validation
 Before committing:
 - `bash tests/smoke.sh`

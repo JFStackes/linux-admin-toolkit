@@ -11,3 +11,7 @@ The toolkit first tries `sshd -T`, then `/etc/ssh/sshd_config`, and finally fall
 ## Diagnostic reports
 
 Before sharing a generated report, review it. Reports may contain hostnames, addresses, usernames, service names and other infrastructure metadata.
+
+## Maintenance scans return incomplete results
+
+If `du` or `find` reports unreadable directories, choose a narrower path or use `sudo` when you need to include protected data. Run a separate scan on a mount point to inspect its filesystem.

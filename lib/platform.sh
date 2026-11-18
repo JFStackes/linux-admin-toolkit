@@ -3,6 +3,7 @@
 
 os_pretty_name() {
   if [[ -r /etc/os-release ]]; then
+    # shellcheck source=/dev/null
     . /etc/os-release
     printf '%s\n' "${PRETTY_NAME:-${NAME:-Linux}}"
   else

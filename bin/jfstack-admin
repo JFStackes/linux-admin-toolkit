@@ -5,13 +5,16 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 if [[ -f "$SCRIPT_DIR/../lib/core.sh" ]]; then
-  export JFSTACK_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+  JFSTACK_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 elif [[ -d /opt/jfstack-admin/lib ]]; then
-  export JFSTACK_ROOT='/opt/jfstack-admin'
+  JFSTACK_ROOT='/opt/jfstack-admin'
 else
   printf '[ERROR] Unable to locate JFStack Linux Admin Toolkit files.\n' >&2
   exit 1
 fi
+export JFSTACK_ROOT
+# ShellCheck validates the shared library separately.
+# shellcheck source=/dev/null
 source "$JFSTACK_ROOT/lib/core.sh"
 
 help_text() {
@@ -40,7 +43,12 @@ Categories and current v0.1 actions:
   cert          check HOST[:PORT]
   backup        check PATH
   diagnose      [OUTPUT_FILE]
-  maintenance   overview
+  maintenance   overview | large-dirs [PATH] [LIMIT] | large-files [PATH] [LIMIT]
+                clean-cache | clean-updates | rotate-logs | clean-temp
+                vacuum-journal [DAYS]
+
+Maintenance scans default to / and 10 results (limit: 1-100).
+Journal cleanup defaults to 30 days. Cleanup actions accept --dry-run or --yes.
 
 Examples:
   sudo jfstack-admin user create takaka --expires 7d --docker --generate-password
@@ -48,6 +56,8 @@ Examples:
   sudo jfstack-admin user create vendor --expires 1m --generate-ssh-key
   jfstack-admin network ports
   jfstack-admin docker status
+  jfstack-admin maintenance large-files /var 20
+  jfstack-admin maintenance vacuum-journal 30 --dry-run
   sudo jfstack-admin diagnose /root/server-report.txt
 EOF_HELP
 }
@@ -74,12 +84,12 @@ interactive_menu() {
  13) Certificates
  14) Backups
  15) Diagnostics
- 16) Maintenance
+ 16) Analysis & Cleanup
 
   0) Exit
 MENU
     printf '\n'
-    read -r -p 'Select an option: ' choice
+    read -r -p 'Select an option: ' choice || return 0
     case "$choice" in
       1) "$JFSTACK_ROOT/modules/users/menu.sh";;
       2) "$JFSTACK_ROOT/modules/system/menu.sh";;
@@ -117,21 +127,54 @@ case "$1" in
       delete) exec "$JFSTACK_ROOT/modules/users/delete-user.sh" "$@";;
       *) error 'Unknown user action.'; help_text; exit 2;;
     esac ;;
-  system) [[ "${2:-}" == info ]] && exec "$JFSTACK_ROOT/modules/system/summary.sh" || { error 'Use: system info'; exit 2; } ;;
-  service) [[ "${2:-}" == status ]] && { shift 2; exec "$JFSTACK_ROOT/modules/services/status.sh" "$@"; } || { error 'Use: service status [SERVICE]'; exit 2; } ;;
-  process) [[ "${2:-}" == top ]] && exec "$JFSTACK_ROOT/modules/processes/top.sh" "${3:-cpu}" || { error 'Use: process top [cpu|mem]'; exit 2; } ;;
-  storage) [[ "${2:-}" == info ]] && exec "$JFSTACK_ROOT/modules/storage/overview.sh" || { error 'Use: storage info'; exit 2; } ;;
+  system)
+    if [[ "${2:-}" == info ]]; then exec "$JFSTACK_ROOT/modules/system/summary.sh"; fi
+    error 'Use: system info'; exit 2 ;;
+  service)
+    if [[ "${2:-}" == status ]]; then
+      shift 2
+      exec "$JFSTACK_ROOT/modules/services/status.sh" "$@"
+    fi
+    error 'Use: service status [SERVICE]'; exit 2 ;;
+  process)
+    if [[ "${2:-}" == top ]]; then exec "$JFSTACK_ROOT/modules/processes/top.sh" "${3:-cpu}"; fi
+    error 'Use: process top [cpu|mem]'; exit 2 ;;
+  storage)
+    if [[ "${2:-}" == info ]]; then exec "$JFSTACK_ROOT/modules/storage/overview.sh"; fi
+    error 'Use: storage info'; exit 2 ;;
   network)
     case "${2:-}" in info) exec "$JFSTACK_ROOT/modules/network/overview.sh";; ports) exec "$JFSTACK_ROOT/modules/network/ports.sh";; test) exec "$JFSTACK_ROOT/modules/network/test.sh" "${3:-1.1.1.1}";; *) error 'Use: network info|ports|test'; exit 2;; esac ;;
   ssh) case "${2:-}" in info) exec "$JFSTACK_ROOT/modules/ssh/overview.sh";; sessions) exec "$JFSTACK_ROOT/modules/ssh/sessions.sh";; *) error 'Use: ssh info|sessions'; exit 2;; esac ;;
-  firewall) [[ "${2:-}" == status ]] && exec "$JFSTACK_ROOT/modules/firewall/overview.sh" || { error 'Use: firewall status'; exit 2; } ;;
-  docker) [[ "${2:-}" == status ]] && exec "$JFSTACK_ROOT/modules/docker/overview.sh" || { error 'Use: docker status'; exit 2; } ;;
-  packages) [[ "${2:-}" == updates ]] && exec "$JFSTACK_ROOT/modules/packages/overview.sh" || { error 'Use: packages updates'; exit 2; } ;;
-  logs) [[ "${2:-}" == errors ]] && exec "$JFSTACK_ROOT/modules/logs/errors.sh" || { error 'Use: logs errors'; exit 2; } ;;
-  security) [[ "${2:-}" == overview ]] && exec "$JFSTACK_ROOT/modules/security/overview.sh" || { error 'Use: security overview'; exit 2; } ;;
-  cert) [[ "${2:-}" == check ]] && exec "$JFSTACK_ROOT/modules/certificates/check.sh" "${3:-}" || { error 'Use: cert check HOST[:PORT]'; exit 2; } ;;
-  backup) [[ "${2:-}" == check ]] && exec "$JFSTACK_ROOT/modules/backups/check-path.sh" "${3:-}" || { error 'Use: backup check PATH'; exit 2; } ;;
+  firewall)
+    if [[ "${2:-}" == status ]]; then exec "$JFSTACK_ROOT/modules/firewall/overview.sh"; fi
+    error 'Use: firewall status'; exit 2 ;;
+  docker)
+    if [[ "${2:-}" == status ]]; then exec "$JFSTACK_ROOT/modules/docker/overview.sh"; fi
+    error 'Use: docker status'; exit 2 ;;
+  packages)
+    if [[ "${2:-}" == updates ]]; then exec "$JFSTACK_ROOT/modules/packages/overview.sh"; fi
+    error 'Use: packages updates'; exit 2 ;;
+  logs)
+    if [[ "${2:-}" == errors ]]; then exec "$JFSTACK_ROOT/modules/logs/errors.sh"; fi
+    error 'Use: logs errors'; exit 2 ;;
+  security)
+    if [[ "${2:-}" == overview ]]; then exec "$JFSTACK_ROOT/modules/security/overview.sh"; fi
+    error 'Use: security overview'; exit 2 ;;
+  cert)
+    if [[ "${2:-}" == check ]]; then exec "$JFSTACK_ROOT/modules/certificates/check.sh" "${3:-}"; fi
+    error 'Use: cert check HOST[:PORT]'; exit 2 ;;
+  backup)
+    if [[ "${2:-}" == check ]]; then exec "$JFSTACK_ROOT/modules/backups/check-path.sh" "${3:-}"; fi
+    error 'Use: backup check PATH'; exit 2 ;;
   diagnose) exec "$JFSTACK_ROOT/modules/diagnostics/report.sh" "${2:-}" ;;
-  maintenance) [[ "${2:-}" == overview ]] && exec "$JFSTACK_ROOT/modules/maintenance/overview.sh" || { error 'Use: maintenance overview'; exit 2; } ;;
+  maintenance)
+    shift
+    case "${1:-}" in
+      overview) exec "$JFSTACK_ROOT/modules/maintenance/overview.sh" ;;
+      large-dirs|large-files) exec "$JFSTACK_ROOT/modules/maintenance/scan.sh" "$@" ;;
+      clean-cache|clean-updates|rotate-logs|vacuum-journal|clean-temp)
+        exec "$JFSTACK_ROOT/modules/maintenance/cleanup.sh" "$@" ;;
+      *) error 'Unknown maintenance action. See jfstack-admin --help.'; exit 2 ;;
+    esac ;;
   *) error "Unknown category: $1"; help_text; exit 2 ;;
 esac

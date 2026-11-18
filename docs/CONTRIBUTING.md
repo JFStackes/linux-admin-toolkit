@@ -17,4 +17,4 @@ shellcheck bin/jfstack-admin
 - Do not log secrets.
 - Avoid changing system configuration as a branding mechanism.
 - Document destructive behavior and require confirmation.
-- Add or update Wiki source when a public CLI command changes.
+- Update the [CLI reference](wiki/CLI-Reference.md) and the affected guide when a public command changes.

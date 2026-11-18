@@ -13,6 +13,9 @@ printf '== CLI ==\n'
 "$ROOT/bin/jfstack-admin" --help >/dev/null
 "$ROOT/bin/jfstack-admin" system info >/dev/null
 
+printf '== Analysis and cleanup ==\n'
+bash "$ROOT/tests/maintenance.sh"
+
 printf '== Branding / secret-log guard ==\n'
 grep -q 'JFStack Linux Admin Toolkit' "$ROOT/README.md"
 if grep -RniE 'log_event.*(password=|private_key=|token=|secret=)' "$ROOT"/modules "$ROOT"/lib; then

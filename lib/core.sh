@@ -13,4 +13,6 @@ source "$JFSTACK_ROOT/lib/validation.sh"
 # shellcheck source=lib/platform.sh
 source "$JFSTACK_ROOT/lib/platform.sh"
 
+# The CLI reads this variable after sourcing the library.
+# shellcheck disable=SC2034
 JFSTACK_VERSION="$(cat "$JFSTACK_ROOT/VERSION" 2>/dev/null || printf 'dev')"

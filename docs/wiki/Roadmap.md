@@ -12,7 +12,6 @@
 ## v0.2
 
 - Richer service management.
-- Storage analysis and large-file discovery.
 - Improved network diagnostics.
 - Expanded logs and systemd workflows.
 - Safer non-interactive flags and exit-code documentation.
