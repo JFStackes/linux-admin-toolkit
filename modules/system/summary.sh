@@ -13,4 +13,5 @@ if command -v free >/dev/null 2>&1; then free -h | sed 's/^/ /'; fi
 printf ' Primary IP : %s\n' "$(primary_ip)"
 printf ' SSH port   : %s\n' "$(ssh_port)"
 printf ' Pkg manager: %s\n' "$(pkg_manager)"
+if [[ -f /run/reboot-required ]]; then printf ' Reboot required: yes\n'; fi
 line

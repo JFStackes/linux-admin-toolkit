@@ -43,9 +43,9 @@ Categories and current v0.1 actions:
   cert          check HOST[:PORT]
   backup        check PATH
   diagnose      [OUTPUT_FILE]
-  maintenance   overview | large-dirs [PATH] [LIMIT] | large-files [PATH] [LIMIT]
+  maintenance   overview | journal-usage | large-dirs [PATH] [LIMIT] | large-files [PATH] [LIMIT]
                 clean-cache | clean-updates | rotate-logs | clean-temp
-                vacuum-journal [DAYS]
+                vacuum-journal [DAYS] | clean-all [DAYS]
 
 Maintenance scans default to / and 10 results (limit: 1-100).
 Journal cleanup defaults to 30 days. Cleanup actions accept --dry-run or --yes.
@@ -57,58 +57,41 @@ Examples:
   jfstack-admin network ports
   jfstack-admin docker status
   jfstack-admin maintenance large-files /var 20
-  jfstack-admin maintenance vacuum-journal 30 --dry-run
+  jfstack-admin maintenance clean-all --dry-run
   sudo jfstack-admin diagnose /root/server-report.txt
 EOF_HELP
 }
 
 interactive_menu() {
+  local choice host os
+  host=$(hostname)
+  os=$(os_pretty_name)
   while true; do
-    clear 2>/dev/null || true
+    if [[ -t 1 && ${TERM:-dumb} != dumb ]]; then clear 2>/dev/null || true; fi
     banner
-    printf ' Version : %s\n Host    : %s\n OS      : %s\n IP      : %s\n SSH     : %s\n' "$JFSTACK_VERSION" "$(hostname)" "$(os_pretty_name)" "$(primary_ip)" "$(ssh_port)"
-    section 'ADMINISTRATION'
+    printf ' %s | %s | v%s\n' "$host" "$os" "$JFSTACK_VERSION"
+    section 'MAIN MENU'
     cat <<'MENU'
   1) Users & Groups
-  2) System
-  3) Services
-  4) Processes
-  5) Storage
-  6) Network
-  7) SSH
-  8) Firewall
-  9) Docker
- 10) Packages & Updates
- 11) Logs
- 12) Security
- 13) Certificates
- 14) Backups
- 15) Diagnostics
- 16) Analysis & Cleanup
-
+  2) Analysis & Cleanup
+  3) Diagnostics
+  4) System & Services
+  5) Network & Security
+  6) Software & Containers
   0) Exit
+
 MENU
-    printf '\n'
-    read -r -p 'Select an option: ' choice || return 0
+    read -r -p 'Select: ' choice || return 0
     case "$choice" in
       1) "$JFSTACK_ROOT/modules/users/menu.sh";;
-      2) "$JFSTACK_ROOT/modules/system/menu.sh";;
-      3) "$JFSTACK_ROOT/modules/services/menu.sh";;
-      4) "$JFSTACK_ROOT/modules/processes/menu.sh";;
-      5) "$JFSTACK_ROOT/modules/storage/menu.sh";;
-      6) "$JFSTACK_ROOT/modules/network/menu.sh";;
-      7) "$JFSTACK_ROOT/modules/ssh/menu.sh";;
-      8) "$JFSTACK_ROOT/modules/firewall/menu.sh";;
-      9) "$JFSTACK_ROOT/modules/docker/menu.sh";;
-      10) "$JFSTACK_ROOT/modules/packages/menu.sh";;
-      11) "$JFSTACK_ROOT/modules/logs/menu.sh";;
-      12) "$JFSTACK_ROOT/modules/security/menu.sh";;
-      13) "$JFSTACK_ROOT/modules/certificates/menu.sh";;
-      14) "$JFSTACK_ROOT/modules/backups/menu.sh";;
-      15) "$JFSTACK_ROOT/modules/diagnostics/menu.sh";;
-      16) "$JFSTACK_ROOT/modules/maintenance/menu.sh";;
+      2) "$JFSTACK_ROOT/modules/maintenance/menu.sh";;
+      3) "$JFSTACK_ROOT/modules/diagnostics/menu.sh";;
+      4) "$JFSTACK_ROOT/modules/system/menu.sh";;
+      5) "$JFSTACK_ROOT/modules/network/menu.sh";;
+      6) "$JFSTACK_ROOT/modules/packages/menu.sh";;
       0) exit 0;;
-      *) warn 'Invalid option.'; sleep 1;;
+      *) warn 'Choose a number from 0 to 6.'
+         read -r -p 'Press Enter to continue... ' _ || return 0 ;;
     esac
   done
 }
@@ -171,8 +154,9 @@ case "$1" in
     shift
     case "${1:-}" in
       overview) exec "$JFSTACK_ROOT/modules/maintenance/overview.sh" ;;
+      journal-usage) exec "$JFSTACK_ROOT/modules/maintenance/overview.sh" journal-usage ;;
       large-dirs|large-files) exec "$JFSTACK_ROOT/modules/maintenance/scan.sh" "$@" ;;
-      clean-cache|clean-updates|rotate-logs|vacuum-journal|clean-temp)
+      clean-all|clean-cache|clean-updates|rotate-logs|vacuum-journal|clean-temp)
         exec "$JFSTACK_ROOT/modules/maintenance/cleanup.sh" "$@" ;;
       *) error 'Unknown maintenance action. See jfstack-admin --help.'; exit 2 ;;
     esac ;;

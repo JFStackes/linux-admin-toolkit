@@ -21,20 +21,20 @@ Installation copies the toolkit to `/opt/jfstack-admin` and links the executable
 
 ## Analyze and clean a host
 
-Open **16) Analysis & Cleanup** to inspect disk space, inode usage, the largest directories and files, journal usage and maintenance status. The same submenu offers package cache cleanup, update leftovers, policy-based log rotation, archived journal cleanup and expired temporary files.
+Open **2) Analysis & Cleanup** to check disk space, inodes, block devices and journal usage, or find the largest directories and files. Under **Cleanup options**, choose **Clean all available items** to review a single plan, or select an individual cleanup.
 
 ```bash
 jfstack-admin maintenance large-dirs /var 10
 jfstack-admin maintenance large-files /home 20
-jfstack-admin maintenance vacuum-journal 30 --dry-run
-sudo jfstack-admin maintenance clean-cache
+jfstack-admin maintenance clean-all 30 --dry-run
+sudo jfstack-admin maintenance clean-all
 ```
 
-Cleanup requires root and an interactive confirmation. `--dry-run` shows the command without running it. `--yes` explicitly authorizes unattended execution. See the [maintenance guide](docs/wiki/Maintenance.md) for the scope of each action.
+Cleanup requires root and interactive confirmation. `--dry-run` shows the plan without applying it. `--yes` explicitly authorizes unattended execution. See the [maintenance guide](docs/wiki/Maintenance.md) for the scope of each action.
 
 ## Administer users and inspect a server
 
-The toolkit supports local user lifecycle management with optional account expiration, sudo and Docker membership, generated passwords and SSH keys. The other menu categories cover services, processes, storage, networking, SSH, firewalls, Docker, updates, logs, security, TLS certificates, backups and diagnostics.
+Use **1) Users & Groups** to manage local accounts, expiration, credentials and group membership. **3) Diagnostics** brings together recent errors, failed services, connectivity, TLS and backup checks, and the diagnostic report. Open **4) System & Services** for system and process details, **5) Network & Security** for network and access settings, or **6) Software & Containers** for updates and Docker.
 
 ```bash
 sudo jfstack-admin user create contractor --expires 7d --generate-password

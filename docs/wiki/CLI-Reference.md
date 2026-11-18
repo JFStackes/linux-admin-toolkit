@@ -24,6 +24,7 @@ jfstack-admin cert check HOST[:PORT]
 jfstack-admin backup check PATH
 jfstack-admin diagnose [OUTPUT_FILE]
 jfstack-admin maintenance overview
+jfstack-admin maintenance journal-usage
 jfstack-admin maintenance large-dirs [PATH] [LIMIT]
 jfstack-admin maintenance large-files [PATH] [LIMIT]
 jfstack-admin maintenance clean-cache [--dry-run|--yes]
@@ -31,6 +32,20 @@ jfstack-admin maintenance clean-updates [--dry-run|--yes]
 jfstack-admin maintenance rotate-logs [--dry-run|--yes]
 jfstack-admin maintenance vacuum-journal [DAYS] [--dry-run|--yes]
 jfstack-admin maintenance clean-temp [--dry-run|--yes]
+jfstack-admin maintenance clean-all [DAYS] [--dry-run|--yes]
 ```
 
 See [[Maintenance]] for defaults, requirements and the scope of each cleanup action.
+
+## Main menu
+
+Use `0` to return from a submenu.
+
+| Category | Tasks |
+| --- | --- |
+| 1. Users & Groups | Local users, passwords and account expiration |
+| 2. Analysis & Cleanup | Storage, large files and directories, journal usage and cleanup |
+| 3. Diagnostics | Recent errors, failed and running services, connectivity, TLS, backup paths and diagnostic reports |
+| 4. System & Services | System summary, individual service status, processes by CPU or memory |
+| 5. Network & Security | Network configuration, listening ports, SSH configuration and sessions, firewall and security overview |
+| 6. Software & Containers | Package updates and Docker status |

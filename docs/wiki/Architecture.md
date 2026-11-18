@@ -20,4 +20,4 @@ bin/jfstack-admin
 
 This keeps each task inspectable and allows a module to be executed directly during development or troubleshooting.
 
-Menu option `16` and the `maintenance` CLI category share the same entry points. `modules/maintenance/overview.sh` reports disk pressure, journal usage, failed services and reboot status. `scan.sh` ranks files or directories. `cleanup.sh` validates arguments, selects the system utility, previews the command and requires confirmation before writing maintenance events and running it. Disk and inode usage comes from `modules/storage/overview.sh`.
+The main menu opens six task menus. Analysis, diagnostics, system, network and software dispatch through the same CLI commands available to scripts. Disk and inode usage comes from `modules/storage/overview.sh`. `modules/maintenance/scan.sh` ranks files or directories, and `cleanup.sh` builds and previews the cleanup plan before running each approved step. `modules/maintenance/overview.sh` also provides the legacy `maintenance overview` command.

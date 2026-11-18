@@ -2,8 +2,8 @@
 
 ## Unreleased
 
-- Expanded main menu option `16` into an **Analysis & Cleanup** submenu with disk and inode usage, largest-directory and largest-file scans, package cache cleanup, log rotation, archived journal cleanup and temporary-file cleanup.
-- Added CLI previews and explicit confirmation for cleanup actions.
+- Organized the main menu into six task categories, with storage analysis under **Analysis & Cleanup**, troubleshooting tests under **Diagnostics** and direct access to system, network and software status.
+- Added a plan for cleaning all available items in one operation, with preview, explicit confirmation and a result summary. Individual cleanup commands remain available.
 - Consolidated project documentation under `docs/` and added a Spanish quick start.
 
 ## 0.1.0 - 2026-09-30

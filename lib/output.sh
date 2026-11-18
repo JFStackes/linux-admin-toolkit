@@ -26,3 +26,9 @@ ok() { printf '%b[OK]%b   %s\n' "$C_GREEN" "$C_RESET" "$*"; }
 warn() { printf '%b[WARN]%b %s\n' "$C_YELLOW" "$C_RESET" "$*" >&2; }
 error() { printf '%b[ERROR]%b %s\n' "$C_RED" "$C_RESET" "$*" >&2; }
 section() { printf '\n'; subline; printf ' %s\n' "$*"; subline; }
+
+run_menu_action() {
+  "$@" || warn "Operation exited with status $?."
+  printf '\n'
+  read -r -p 'Press Enter to return to the menu... ' _
+}

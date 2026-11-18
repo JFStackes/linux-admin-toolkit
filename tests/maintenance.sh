@@ -17,9 +17,15 @@ results=$("$cli" maintenance large-files "$scan" 1)
 results=$("$cli" maintenance large-dirs "$scan" 1)
 [[ $results == *'./a\ large\ directory'* && $results != *'./small'* ]]
 
-results=$(printf '16\n4\n%s\n1\n\n0\n0\n' "$scan" | TERM=dumb "$cli")
-[[ $results == *'16) Analysis & Cleanup'* && $results == *"$(printf '%q' "$large_file")"* ]]
-[[ $(grep -c ' ANALYSIS & CLEANUP' <<< "$results") -eq 2 ]]
+results=$(printf '2\n3\n%s\n1\n\n5\n0\n0\n0\n' "$scan" | TERM=dumb "$cli")
+[[ $results == *'2) Analysis & Cleanup'* && $results == *"$(printf '%q' "$large_file")"* ]]
+[[ $results == *'1) Clean all available items'* ]]
+[[ $(grep -c '^ ANALYSIS & CLEANUP$' <<< "$results") -eq 3 ]]
+
+results=$(printf '3\n5\n%s\n\n0\n4\n1\n\n0\n5\n0\n6\n0\n0\n' "$scan" | TERM=dumb "$cli")
+[[ $results == *' BACKUP PATH CHECK: '* && $results == *' SYSTEM SUMMARY'* ]]
+[[ $results == *' NETWORK & SECURITY'* && $results == *' SOFTWARE & CONTAINERS'* ]]
+[[ $(grep -c '^ DIAGNOSTICS$' <<< "$results") -eq 2 ]]
 
 # Make the preview checks distro-independent and ensure they never run a system command.
 for program in bash dirname cat; do
@@ -47,6 +53,14 @@ for manager in apt-get dnf yum; do
   [[ $results == *"Command: $manager $cache"* ]]
   results=$(PATH="$fixture/path" "$cli" maintenance clean-updates --dry-run)
   [[ $results == *"Command: $manager $updates"* ]]
+  results=$(PATH="$fixture/path" "$cli" maintenance clean-all 45 --dry-run 2>&1)
+  [[ $results == *"Command: $manager $cache"* && $results == *'--vacuum-time=45days'* ]]
+  [[ $results == *'Skipping rotate-logs.'* && $results == *'systemd-tmpfiles --clean'* ]]
+  if [[ $manager == apt-get ]]; then
+    [[ $results != *'apt-get autoclean'* ]]
+  else
+    [[ $results == *"Command: $manager clean metadata"* ]]
+  fi
   rm -- "$fixture/path/$manager"
 done
 
@@ -65,4 +79,7 @@ PATH="$fixture/path" "$cli" maintenance vacuum-journal --yes --dry-run >/dev/nul
 [[ $status -eq 2 ]]
 status=0
 printf 'y\n' | PATH="$fixture/path" "$cli" maintenance vacuum-journal >/dev/null 2>&1 || status=$?
+[[ $status -eq 1 ]]
+status=0
+printf 'y\n' | PATH="$fixture/path" "$cli" maintenance clean-all >/dev/null 2>&1 || status=$?
 [[ $status -eq 1 ]]

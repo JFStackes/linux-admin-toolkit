@@ -21,20 +21,20 @@ El instalador copia la herramienta a `/opt/jfstack-admin` y crea el enlace `/usr
 
 ## Análisis y limpieza
 
-Abre **16) Analysis & Cleanup** para consultar el espacio y los inodos, localizar los archivos y carpetas más grandes y revisar el estado de mantenimiento y el tamaño del journal. El submenú también permite limpiar la caché de paquetes, restos de actualizaciones, registros antiguos y archivos temporales, además de aplicar la rotación de logs del sistema.
+Abre **2) Analysis & Cleanup** para consultar el espacio, los inodos, los dispositivos de disco y el tamaño del journal, o para localizar los archivos y carpetas más grandes. En **Cleanup options** puedes elegir una operación concreta o revisar el plan completo con **Clean all available items**.
 
 ```bash
 jfstack-admin maintenance large-dirs /var 10
 jfstack-admin maintenance large-files /home 20
-jfstack-admin maintenance vacuum-journal 30 --dry-run
-sudo jfstack-admin maintenance clean-cache
+jfstack-admin maintenance clean-all 30 --dry-run
+sudo jfstack-admin maintenance clean-all
 ```
 
-La limpieza requiere privilegios de root y confirmación interactiva. `--dry-run` muestra el comando sin ejecutarlo y `--yes` autoriza explícitamente la ejecución desatendida. La [guía de mantenimiento](wiki/Maintenance.md) describe qué afecta cada acción.
+La limpieza requiere privilegios de root y confirmación interactiva. `--dry-run` muestra el plan sin aplicarlo y `--yes` autoriza explícitamente la ejecución desatendida. La [guía de mantenimiento](wiki/Maintenance.md) describe qué afecta cada acción.
 
 ## Administración y diagnóstico
 
-La herramienta permite crear y gestionar usuarios locales con caducidad opcional, pertenencia a grupos sudo y Docker, contraseñas generadas y claves SSH. El menú también incluye servicios, procesos, discos, red, SSH, cortafuegos, Docker, actualizaciones, logs, seguridad, certificados TLS, copias de seguridad y diagnósticos.
+En **1) Users & Groups** puedes administrar cuentas locales, caducidad, credenciales y pertenencia a grupos. **3) Diagnostics** reúne los errores recientes, los servicios con fallos, las pruebas de conectividad y TLS, la comprobación de copias y el informe de diagnóstico. Usa **4) System & Services** para consultar el sistema y los procesos, **5) Network & Security** para revisar la red y los accesos, y **6) Software & Containers** para consultar actualizaciones y Docker.
 
 ```bash
 sudo jfstack-admin user create contractor --expires 7d --generate-password
